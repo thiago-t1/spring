@@ -1,8 +1,12 @@
 # Diagrama de Classes — PetCare Digital Solutions
 
 Diagrama de classes das entidades JPA do domínio da clínica veterinária, com atributos e
-relacionamentos (cardinalidade). Representado em sintaxe **PlantUML** (pode ser colado em
-https://www.plantuml.com/plantuml/uml/ ou em qualquer plugin PlantUML para gerar a imagem).
+relacionamentos (cardinalidade).
+
+![Diagrama de Classes](diagrama-uml.png)
+
+Representado também em sintaxe **PlantUML** abaixo (pode ser colado em
+https://www.plantuml.com/plantuml/uml/ ou em qualquer plugin PlantUML para regenerar a imagem).
 
 ```plantuml
 @startuml DiagramaClinicaVeterinaria

@@ -273,5 +273,7 @@ Abaixo os principais cenários testados, cobrindo sucesso e erro nos três módu
 
 ## Diagrama de classes
 
+![Diagrama de Classes](diagrama-uml.png)
+
 Veja `DIAGRAMA_UML.md` para a descrição completa do diagrama UML (entidades, atributos e
 relacionamentos).
