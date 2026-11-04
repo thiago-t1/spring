@@ -1,0 +1,255 @@
+### PetCare Digital Solutions — Requisições de teste manual
+### Formato compatível com Thunder Client (importar como "cURL/HTTP" ou copiar manualmente)
+### e com a extensão REST Client do VS Code (basta abrir este arquivo e clicar em "Send Request").
+### Rode a aplicação antes (./mvnw spring-boot:run) e execute as requisições NA ORDEM,
+### pois varias dependem dos IDs criados pelas anteriores (ids assumidos = 1 em um banco limpo).
+
+@host = http://localhost:8080
+
+### ============================================================
+### MODULO 1 - TUTORES E ANIMAIS
+### ============================================================
+
+### 1. Criar tutor (sucesso -> 201)
+POST {{host}}/api/tutores
+Content-Type: application/json
+
+{
+  "nome": "Maria Souza",
+  "cpf": "123.456.789-00",
+  "telefone": "(11) 99999-0000",
+  "endereco": "Rua das Flores, 123 - Sao Paulo/SP"
+}
+
+### 2. Criar tutor com CPF duplicado (erro -> 409 Conflict)
+POST {{host}}/api/tutores
+Content-Type: application/json
+
+{
+  "nome": "Maria Souza Copia",
+  "cpf": "123.456.789-00",
+  "telefone": "(11) 98888-0000",
+  "endereco": "Outro endereco"
+}
+
+### 3. Criar tutor sem nome (erro -> 400 Bad Request / validacao)
+POST {{host}}/api/tutores
+Content-Type: application/json
+
+{
+  "cpf": "999.999.999-99"
+}
+
+### 4. Listar todos os tutores (200)
+GET {{host}}/api/tutores
+
+### 5. Buscar tutor por id existente (200)
+GET {{host}}/api/tutores/1
+
+### 6. Buscar tutor inexistente (erro -> 404 Not Found)
+GET {{host}}/api/tutores/9999
+
+### 7. Criar animal vinculado ao tutor 1 (sucesso -> 201)
+POST {{host}}/api/animais
+Content-Type: application/json
+
+{
+  "nome": "Rex",
+  "especie": "CANINA",
+  "raca": "Labrador",
+  "dataNascimento": "2021-05-10",
+  "tutorId": 1
+}
+
+### 8. Criar segundo animal (gato) do mesmo tutor (sucesso -> 201)
+POST {{host}}/api/animais
+Content-Type: application/json
+
+{
+  "nome": "Mimi",
+  "especie": "FELINA",
+  "raca": "Siames",
+  "dataNascimento": "2022-02-20",
+  "tutorId": 1
+}
+
+### 9. Criar animal com tutor inexistente (erro -> 404 Not Found)
+POST {{host}}/api/animais
+Content-Type: application/json
+
+{
+  "nome": "Animal Orfao",
+  "especie": "CANINA",
+  "tutorId": 9999
+}
+
+### 10. Listar animais de um tutor (200)
+GET {{host}}/api/animais?tutorId=1
+
+### 11. Buscar animal por id (200)
+GET {{host}}/api/animais/1
+
+
+### ============================================================
+### MODULO 2 - VETERINARIOS E CONSULTAS
+### ============================================================
+
+### 12. Criar veterinario habilitado para CANINA e FELINA (sucesso -> 201)
+POST {{host}}/api/veterinarios
+Content-Type: application/json
+
+{
+  "nome": "Dr. Joao Pereira",
+  "crmv": "CRMV-SP 12345",
+  "especiesAtendidas": ["CANINA", "FELINA"]
+}
+
+### 13. Criar veterinario habilitado apenas para AVE (sucesso -> 201)
+POST {{host}}/api/veterinarios
+Content-Type: application/json
+
+{
+  "nome": "Dra. Ana Lima",
+  "crmv": "CRMV-SP 54321",
+  "especiesAtendidas": ["AVE"]
+}
+
+### 14. Criar veterinario com CRMV duplicado (erro -> 409 Conflict)
+POST {{host}}/api/veterinarios
+Content-Type: application/json
+
+{
+  "nome": "Dr. Copia",
+  "crmv": "CRMV-SP 12345",
+  "especiesAtendidas": ["CANINA"]
+}
+
+### 15. Listar veterinarios aptos para a especie CANINA (200)
+GET {{host}}/api/veterinarios?especie=CANINA
+
+### 16. Agendar consulta valida: animal 1 (CANINA) com veterinario 1 (sucesso -> 201)
+POST {{host}}/api/consultas
+Content-Type: application/json
+
+{
+  "animalId": 1,
+  "veterinarioId": 1,
+  "local": "Sala 2 - Unidade Centro",
+  "dataHora": "2026-12-10T14:30:00"
+}
+
+### 17. Tentar agendar OUTRA consulta no MESMO horario e MESMO veterinario (erro -> 409 Conflict)
+POST {{host}}/api/consultas
+Content-Type: application/json
+
+{
+  "animalId": 2,
+  "veterinarioId": 1,
+  "local": "Sala 3",
+  "dataHora": "2026-12-10T14:45:00"
+}
+
+### 18. Tentar agendar consulta com veterinario nao habilitado para a especie (erro -> 400 Bad Request)
+### animal 2 e FELINA, mas veterinario 2 so atende AVE
+POST {{host}}/api/consultas
+Content-Type: application/json
+
+{
+  "animalId": 2,
+  "veterinarioId": 2,
+  "local": "Sala 1",
+  "dataHora": "2026-12-11T09:00:00"
+}
+
+### 19. Agendar consulta em horario diferente para o mesmo veterinario (sucesso -> 201)
+POST {{host}}/api/consultas
+Content-Type: application/json
+
+{
+  "animalId": 2,
+  "veterinarioId": 1,
+  "local": "Sala 2",
+  "dataHora": "2026-12-10T16:00:00"
+}
+
+### 20. Listar todas as consultas (200)
+GET {{host}}/api/consultas
+
+### 21. Listar consultas de um animal (200)
+GET {{host}}/api/consultas?animalId=1
+
+### 22. Listar consultas de um animal filtrando por status (200)
+GET {{host}}/api/consultas?animalId=1&status=AGENDADA
+
+### 23. Cancelar consulta (nao deleta, apenas muda status -> 200)
+PATCH {{host}}/api/consultas/1/cancelar
+
+### 24. Confirmar que a consulta cancelada ainda existe, com status CANCELADA (200)
+GET {{host}}/api/consultas/1
+
+### 25. Marcar segunda consulta como realizada (200)
+PATCH {{host}}/api/consultas/2/realizar
+
+### 26. Cancelar consulta inexistente (erro -> 404 Not Found)
+PATCH {{host}}/api/consultas/9999/cancelar
+
+
+### ============================================================
+### MODULO 3 - PRONTUARIO E VACINACAO
+### ============================================================
+
+### 27. Criar atendimento (prontuario) vinculado a consulta 2 (sucesso -> 201)
+POST {{host}}/api/atendimentos
+Content-Type: application/json
+
+{
+  "consultaId": 2,
+  "diagnostico": "Dermatite leve",
+  "observacoes": "Animal apresentou coceira recorrente",
+  "orientacoes": "Aplicar pomada prescrita por 7 dias e retornar em caso de piora",
+  "data": "2026-12-10T16:30:00"
+}
+
+### 28. Criar atendimento com consulta inexistente (erro -> 404 Not Found)
+POST {{host}}/api/atendimentos
+Content-Type: application/json
+
+{
+  "consultaId": 9999,
+  "diagnostico": "Teste"
+}
+
+### 29. Listar atendimentos de um animal (200)
+GET {{host}}/api/atendimentos?animalId=2
+
+### 30. Registrar vacina vinculada ao atendimento (sucesso -> 201)
+POST {{host}}/api/vacinas
+Content-Type: application/json
+
+{
+  "nome": "V10 (Polivalente Canina)",
+  "dataAplicacao": "2026-12-10",
+  "lote": "L2026-A47",
+  "animalId": 2,
+  "atendimentoId": 1
+}
+
+### 31. Registrar vacina avulsa, sem atendimento vinculado (sucesso -> 201)
+POST {{host}}/api/vacinas
+Content-Type: application/json
+
+{
+  "nome": "Antirrabica",
+  "dataAplicacao": "2026-11-01",
+  "lote": "L2026-R10",
+  "animalId": 1
+}
+
+### 32. Listar vacinas de um animal, ordenadas por data (200)
+GET {{host}}/api/vacinas?animalId=1
+
+### 33. Consultar historico completo do animal (atendimentos + vacinas) (200)
+GET {{host}}/api/animais/2/historico
+
+### 34. Consultar historico de animal inexistente (erro -> 404 Not Found)
+GET {{host}}/api/animais/9999/historico

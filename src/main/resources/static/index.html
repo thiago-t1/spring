@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PetCare Clínica</title>
+<style>
+  :root {
+    --azul: #2563eb;
+    --azul-escuro: #1e3a8a;
+    --verde: #16a34a;
+    --vermelho: #dc2626;
+    --cinza: #f1f5f9;
+    --borda: #cbd5e1;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
+    background: #f8fafc;
+    color: #1e293b;
+  }
+  header {
+    background: var(--azul-escuro);
+    color: white;
+    padding: 16px 24px;
+  }
+  header h1 { margin: 0; font-size: 22px; }
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    background: var(--azul);
+  }
+  nav button {
+    flex: 1;
+    min-width: 120px;
+    padding: 12px 8px;
+    background: var(--azul);
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 3px solid transparent;
+  }
+  nav button:hover { background: #1d4ed8; }
+  nav button.ativo { background: #1d4ed8; border-bottom: 3px solid white; font-weight: bold; }
+  main { padding: 20px; max-width: 1100px; margin: 0 auto; }
+  .aba { display: none; }
+  .aba.ativa { display: block; }
+  .card {
+    background: white;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+  .card h2 { margin-top: 0; font-size: 18px; color: var(--azul-escuro); }
+  form { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+  .campo { display: flex; flex-direction: column; gap: 4px; }
+  .campo label { font-size: 12px; color: #475569; font-weight: bold; }
+  input, select {
+    padding: 7px 8px;
+    border: 1px solid var(--borda);
+    border-radius: 4px;
+    font-size: 14px;
+    min-width: 150px;
+  }
+  button.acao {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background: var(--verde);
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    height: 34px;
+  }
+  button.acao:hover { opacity: 0.9; }
+  button.perigo { background: var(--vermelho); }
+  button.secundario { background: var(--azul); }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+  th, td { border: 1px solid var(--borda); padding: 6px 8px; text-align: left; }
+  th { background: var(--cinza); }
+  tr:nth-child(even) { background: #f8fafc; }
+  .alerta {
+    display: none;
+    padding: 10px 14px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 14px;
+  }
+  .alerta.erro { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .alerta.sucesso { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+  .btn-tab { padding: 4px 10px; font-size: 12px; cursor: pointer; border: none; border-radius: 4px; }
+  .btn-excluir { background: var(--vermelho); color: white; }
+  .btn-cancelar { background: #f97316; color: white; }
+  .btn-realizar { background: var(--verde); color: white; }
+  .vazio { color: #94a3b8; font-style: italic; }
+  .historico-bloco { margin-top: 16px; }
+  .historico-bloco h3 { color: var(--azul-escuro); border-bottom: 2px solid var(--azul); padding-bottom: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>PetCare Clínica Veterinária</h1>
+</header>
+
+<nav id="nav"></nav>
+
+<main>
+  <div id="alerta" class="alerta"></div>
+
+  <!-- TUTORES -->
+  <section id="aba-tutores" class="aba">
+    <div class="card">
+      <h2>Novo Tutor</h2>
+      <form id="form-tutor">
+        <div class="campo"><label>Nome *</label><input name="nome" required></div>
+        <div class="campo"><label>CPF *</label><input name="cpf" required></div>
+        <div class="campo"><label>Telefone</label><input name="telefone"></div>
+        <div class="campo"><label>Endereço</label><input name="endereco"></div>
+        <button class="acao" type="submit">Salvar</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Tutores cadastrados</h2>
+      <div id="lista-tutores"></div>
+    </div>
+  </section>
+
+  <!-- ANIMAIS -->
+  <section id="aba-animais" class="aba">
+    <div class="card">
+      <h2>Novo Animal</h2>
+      <form id="form-animal">
+        <div class="campo"><label>Nome *</label><input name="nome" required></div>
+        <div class="campo"><label>Espécie *</label>
+          <select name="especie" required></select>
+        </div>
+        <div class="campo"><label>Raça</label><input name="raca"></div>
+        <div class="campo"><label>Data Nascimento</label><input type="date" name="dataNascimento"></div>
+        <div class="campo"><label>Tutor *</label>
+          <select name="tutorId" required></select>
+        </div>
+        <button class="acao" type="submit">Salvar</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Animais cadastrados</h2>
+      <div id="lista-animais"></div>
+    </div>
+  </section>
+
+  <!-- VETERINARIOS -->
+  <section id="aba-veterinarios" class="aba">
+    <div class="card">
+      <h2>Novo Veterinário</h2>
+      <form id="form-veterinario">
+        <div class="campo"><label>Nome *</label><input name="nome" required></div>
+        <div class="campo"><label>CRMV *</label><input name="crmv" required></div>
+        <div class="campo"><label>Espécies atendidas *</label>
+          <select name="especiesAtendidas" multiple size="4" required></select>
+        </div>
+        <button class="acao" type="submit">Salvar</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Veterinários cadastrados</h2>
+      <div id="lista-veterinarios"></div>
+    </div>
+  </section>
+
+  <!-- CONSULTAS -->
+  <section id="aba-consultas" class="aba">
+    <div class="card">
+      <h2>Nova Consulta</h2>
+      <form id="form-consulta">
+        <div class="campo"><label>Animal *</label>
+          <select name="animalId" required></select>
+        </div>
+        <div class="campo"><label>Veterinário *</label>
+          <select name="veterinarioId" required></select>
+        </div>
+        <div class="campo"><label>Local *</label><input name="local" required></div>
+        <div class="campo"><label>Data/Hora *</label><input type="datetime-local" name="dataHora" required></div>
+        <button class="acao" type="submit">Agendar</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Consultas</h2>
+      <div id="lista-consultas"></div>
+    </div>
+  </section>
+
+  <!-- ATENDIMENTOS -->
+  <section id="aba-atendimentos" class="aba">
+    <div class="card">
+      <h2>Novo Atendimento</h2>
+      <form id="form-atendimento">
+        <div class="campo"><label>Consulta *</label>
+          <select name="consultaId" required></select>
+        </div>
+        <div class="campo"><label>Diagnóstico</label><input name="diagnostico"></div>
+        <div class="campo"><label>Observações</label><input name="observacoes"></div>
+        <div class="campo"><label>Orientações</label><input name="orientacoes"></div>
+        <div class="campo"><label>Data/Hora</label><input type="datetime-local" name="data"></div>
+        <button class="acao" type="submit">Salvar</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Atendimentos</h2>
+      <div id="lista-atendimentos"></div>
+    </div>
+  </section>
+
+  <!-- VACINAS -->
+  <section id="aba-vacinas" class="aba">
+    <div class="card">
+      <h2>Nova Vacina</h2>
+      <form id="form-vacina">
+        <div class="campo"><label>Nome *</label><input name="nome" required></div>
+        <div class="campo"><label>Data Aplicação *</label><input type="date" name="dataAplicacao" required></div>
+        <div class="campo"><label>Lote</label><input name="lote"></div>
+        <div class="campo"><label>Animal *</label>
+          <select name="animalId" required></select>
+        </div>
+        <div class="campo"><label>Atendimento (opcional)</label>
+          <select name="atendimentoId"><option value="">-- nenhum --</option></select>
+        </div>
+        <button class="acao" type="submit">Salvar</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Vacinas</h2>
+      <div id="lista-vacinas"></div>
+    </div>
+  </section>
+
+  <!-- HISTORICO -->
+  <section id="aba-historico" class="aba">
+    <div class="card">
+      <h2>Histórico do Animal</h2>
+      <form id="form-historico" style="margin-bottom: 10px;">
+        <div class="campo"><label>Animal *</label>
+          <select name="animalId" required></select>
+        </div>
+        <button class="acao secundario" type="submit">Ver histórico</button>
+      </form>
+      <div id="resultado-historico"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const API = '';
+const ESPECIES = ['CANINA','FELINA','AVE','REPTIL','ROEDOR','EQUINA','OUTRA'];
+const ABAS = [
+  { id: 'tutores', label: 'Tutores' },
+  { id: 'animais', label: 'Animais' },
+  { id: 'veterinarios', label: 'Veterinários' },
+  { id: 'consultas', label: 'Consultas' },
+  { id: 'atendimentos', label: 'Atendimentos' },
+  { id: 'vacinas', label: 'Vacinas' },
+  { id: 'historico', label: 'Histórico' },
+];
+
+function montarNav() {
+  const nav = document.getElementById('nav');
+  ABAS.forEach((aba, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = aba.label;
+    btn.dataset.aba = aba.id;
+    if (i === 0) btn.classList.add('ativo');
+    btn.addEventListener('click', () => mostrarAba(aba.id));
+    nav.appendChild(btn);
+  });
+}
+
+function mostrarAba(id) {
+  document.querySelectorAll('.aba').forEach(el => el.classList.remove('ativa'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('ativo'));
+  document.getElementById('aba-' + id).classList.add('ativa');
+  document.querySelector(`nav button[data-aba="${id}"]`).classList.add('ativo');
+  carregarAba(id);
+}
+
+function carregarAba(id) {
+  if (id === 'tutores') carregarTutores();
+  if (id === 'animais') { carregarAnimais(); preencherSelectsAnimal(); }
+  if (id === 'veterinarios') carregarVeterinarios();
+  if (id === 'consultas') { carregarConsultas(); preencherSelectAnimalConsulta(); preencherSelectVeterinario(); }
+  if (id === 'atendimentos') { carregarAtendimentos(); preencherSelectConsultaAtendimento(); }
+  if (id === 'vacinas') { carregarVacinas(); preencherSelectAnimalVacina(); preencherSelectAtendimentoVacina(); }
+  if (id === 'historico') { preencherSelectAnimalHistorico(); }
+}
+
+function mostrarAlerta(msg, tipo) {
+  const el = document.getElementById('alerta');
+  el.textContent = msg;
+  el.className = 'alerta ' + tipo;
+  el.style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  setTimeout(() => { el.style.display = 'none'; }, 6000);
+}
+
+async function chamar(url, options) {
+  try {
+    const resp = await fetch(API + url, options);
+    if (resp.status === 204) return null;
+    const texto = await resp.text();
+    const dados = texto ? JSON.parse(texto) : null;
+    if (!resp.ok) {
+      const msg = (dados && (dados.message || dados.mensagem || dados.erro)) || ('Erro ' + resp.status);
+      const detalhes = (dados && dados.erros) ? (' - ' + JSON.stringify(dados.erros)) : '';
+      throw new Error(msg + detalhes);
+    }
+    return dados;
+  } catch (e) {
+    mostrarAlerta(e.message || 'Erro ao comunicar com a API', 'erro');
+    throw e;
+  }
+}
+
+function post(url, body) {
+  return chamar(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+}
+function patch(url) {
+  return chamar(url, { method: 'PATCH' });
+}
+function del(url) {
+  return chamar(url, { method: 'DELETE' });
+}
+function get(url) {
+  return chamar(url, { method: 'GET' });
+}
+
+function formParaObjeto(form) {
+  const dados = {};
+  new FormData(form).forEach((valor, chave) => {
+    dados[chave] = valor === '' ? null : valor;
+  });
+  return dados;
+}
+
+// ---------- TUTORES ----------
+async function carregarTutores() {
+  const div = document.getElementById('lista-tutores');
+  div.innerHTML = 'Carregando...';
+  let tutores;
+  try { tutores = await get('/api/tutores'); } catch { div.innerHTML = ''; return; }
+  if (!tutores.length) { div.innerHTML = '<p class="vazio">Nenhum tutor cadastrado.</p>'; return; }
+  div.innerHTML = `<table><thead><tr><th>ID</th><th>Nome</th><th>CPF</th><th>Telefone</th><th>Endereço</th><th></th></tr></thead>
+  <tbody>${tutores.map(t => `<tr>
+    <td>${t.id}</td><td>${t.nome}</td><td>${t.cpf}</td><td>${t.telefone ?? ''}</td><td>${t.endereco ?? ''}</td>
+    <td><button class="btn-tab btn-excluir" onclick="excluirTutor(${t.id})">Excluir</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+async function excluirTutor(id) {
+  if (!confirm('Excluir este tutor?')) return;
+  try { await del('/api/tutores/' + id); mostrarAlerta('Tutor excluído.', 'sucesso'); carregarTutores(); }
+  catch {}
+}
+document.getElementById('form-tutor').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const form = ev.target;
+  try {
+    await post('/api/tutores', formParaObjeto(form));
+    mostrarAlerta('Tutor criado com sucesso.', 'sucesso');
+    form.reset();
+    carregarTutores();
+  } catch {}
+});
+
+// ---------- ANIMAIS ----------
+function preencherSelectEspecie(select) {
+  select.innerHTML = ESPECIES.map(e => `<option value="${e}">${e}</option>`).join('');
+}
+async function preencherSelectsAnimal() {
+  const formAnimal = document.getElementById('form-animal');
+  preencherSelectEspecie(formAnimal.elements['especie']);
+  let tutores = [];
+  try { tutores = await get('/api/tutores'); } catch { return; }
+  formAnimal.elements['tutorId'].innerHTML = tutores.map(t => `<option value="${t.id}">${t.nome} (#${t.id})</option>`).join('');
+}
+async function carregarAnimais() {
+  const div = document.getElementById('lista-animais');
+  div.innerHTML = 'Carregando...';
+  let animais;
+  try { animais = await get('/api/animais'); } catch { div.innerHTML = ''; return; }
+  if (!animais.length) { div.innerHTML = '<p class="vazio">Nenhum animal cadastrado.</p>'; return; }
+  div.innerHTML = `<table><thead><tr><th>ID</th><th>Nome</th><th>Espécie</th><th>Raça</th><th>Nascimento</th><th>Tutor</th><th></th></tr></thead>
+  <tbody>${animais.map(a => `<tr>
+    <td>${a.id}</td><td>${a.nome}</td><td>${a.especie}</td><td>${a.raca ?? ''}</td><td>${a.dataNascimento ?? ''}</td><td>${a.tutorNome ?? a.tutorId}</td>
+    <td><button class="btn-tab btn-excluir" onclick="excluirAnimal(${a.id})">Excluir</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+async function excluirAnimal(id) {
+  if (!confirm('Excluir este animal?')) return;
+  try { await del('/api/animais/' + id); mostrarAlerta('Animal excluído.', 'sucesso'); carregarAnimais(); }
+  catch {}
+}
+document.getElementById('form-animal').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const form = ev.target;
+  const dados = formParaObjeto(form);
+  dados.tutorId = dados.tutorId ? Number(dados.tutorId) : null;
+  try {
+    await post('/api/animais', dados);
+    mostrarAlerta('Animal criado com sucesso.', 'sucesso');
+    carregarAnimais();
+  } catch {}
+});
+
+// ---------- VETERINARIOS ----------
+function preencherSelectEspecieMultiplo(select) {
+  select.innerHTML = ESPECIES.map(e => `<option value="${e}">${e}</option>`).join('');
+}
+document.addEventListener('DOMContentLoaded', () => {
+  preencherSelectEspecieMultiplo(document.querySelector('#form-veterinario select[name="especiesAtendidas"]'));
+});
+async function carregarVeterinarios() {
+  const div = document.getElementById('lista-veterinarios');
+  div.innerHTML = 'Carregando...';
+  let vets;
+  try { vets = await get('/api/veterinarios'); } catch { div.innerHTML = ''; return; }
+  if (!vets.length) { div.innerHTML = '<p class="vazio">Nenhum veterinário cadastrado.</p>'; return; }
+  div.innerHTML = `<table><thead><tr><th>ID</th><th>Nome</th><th>CRMV</th><th>Espécies</th><th></th></tr></thead>
+  <tbody>${vets.map(v => `<tr>
+    <td>${v.id}</td><td>${v.nome}</td><td>${v.crmv}</td><td>${(v.especiesAtendidas || []).join(', ')}</td>
+    <td><button class="btn-tab btn-excluir" onclick="excluirVeterinario(${v.id})">Excluir</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+async function excluirVeterinario(id) {
+  if (!confirm('Excluir este veterinário?')) return;
+  try { await del('/api/veterinarios/' + id); mostrarAlerta('Veterinário excluído.', 'sucesso'); carregarVeterinarios(); }
+  catch {}
+}
+document.getElementById('form-veterinario').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const form = ev.target;
+  const especies = Array.from(form.elements['especiesAtendidas'].selectedOptions).map(o => o.value);
+  const dados = { nome: form.elements['nome'].value, crmv: form.elements['crmv'].value, especiesAtendidas: especies };
+  try {
+    await post('/api/veterinarios', dados);
+    mostrarAlerta('Veterinário criado com sucesso.', 'sucesso');
+    form.reset();
+    carregarVeterinarios();
+  } catch {}
+});
+
+// ---------- CONSULTAS ----------
+async function preencherSelectAnimalConsulta() {
+  let animais = [];
+  try { animais = await get('/api/animais'); } catch { return; }
+  document.querySelector('#form-consulta select[name="animalId"]').innerHTML =
+    animais.map(a => `<option value="${a.id}">${a.nome} (#${a.id})</option>`).join('');
+}
+async function preencherSelectVeterinario() {
+  let vets = [];
+  try { vets = await get('/api/veterinarios'); } catch { return; }
+  document.querySelector('#form-consulta select[name="veterinarioId"]').innerHTML =
+    vets.map(v => `<option value="${v.id}">${v.nome} (#${v.id})</option>`).join('');
+}
+async function carregarConsultas() {
+  const div = document.getElementById('lista-consultas');
+  div.innerHTML = 'Carregando...';
+  let consultas;
+  try { consultas = await get('/api/consultas'); } catch { div.innerHTML = ''; return; }
+  if (!consultas.length) { div.innerHTML = '<p class="vazio">Nenhuma consulta cadastrada.</p>'; return; }
+  div.innerHTML = `<table><thead><tr><th>ID</th><th>Animal</th><th>Veterinário</th><th>Local</th><th>Data/Hora</th><th>Status</th><th></th></tr></thead>
+  <tbody>${consultas.map(c => `<tr>
+    <td>${c.id}</td><td>${c.animalNome ?? c.animalId}</td><td>${c.veterinarioNome ?? c.veterinarioId}</td><td>${c.local}</td><td>${c.dataHora ?? ''}</td><td>${c.status}</td>
+    <td>
+      ${c.status === 'AGENDADA' ? `<button class="btn-tab btn-cancelar" onclick="cancelarConsulta(${c.id})">Cancelar</button>
+      <button class="btn-tab btn-realizar" onclick="realizarConsulta(${c.id})">Realizar</button>` : ''}
+    </td>
+  </tr>`).join('')}</tbody></table>`;
+}
+async function cancelarConsulta(id) {
+  try { await patch('/api/consultas/' + id + '/cancelar'); mostrarAlerta('Consulta cancelada.', 'sucesso'); carregarConsultas(); }
+  catch {}
+}
+async function realizarConsulta(id) {
+  try { await patch('/api/consultas/' + id + '/realizar'); mostrarAlerta('Consulta marcada como realizada.', 'sucesso'); carregarConsultas(); }
+  catch {}
+}
+document.getElementById('form-consulta').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const form = ev.target;
+  const dados = formParaObjeto(form);
+  dados.animalId = Number(dados.animalId);
+  dados.veterinarioId = Number(dados.veterinarioId);
+  try {
+    await post('/api/consultas', dados);
+    mostrarAlerta('Consulta agendada com sucesso.', 'sucesso');
+    carregarConsultas();
+  } catch {}
+});
+
+// ---------- ATENDIMENTOS ----------
+async function preencherSelectConsultaAtendimento() {
+  let consultas = [];
+  try { consultas = await get('/api/consultas'); } catch { return; }
+  document.querySelector('#form-atendimento select[name="consultaId"]').innerHTML =
+    consultas.map(c => `<option value="${c.id}">#${c.id} - ${c.animalNome ?? c.animalId} (${c.dataHora ?? ''})</option>`).join('');
+}
+async function carregarAtendimentos() {
+  const div = document.getElementById('lista-atendimentos');
+  div.innerHTML = 'Carregando...';
+  let atendimentos;
+  try { atendimentos = await get('/api/atendimentos'); } catch { div.innerHTML = ''; return; }
+  if (!atendimentos.length) { div.innerHTML = '<p class="vazio">Nenhum atendimento cadastrado.</p>'; return; }
+  div.innerHTML = `<table><thead><tr><th>ID</th><th>Consulta</th><th>Animal</th><th>Diagnóstico</th><th>Observações</th><th>Orientações</th><th>Data</th><th></th></tr></thead>
+  <tbody>${atendimentos.map(a => `<tr>
+    <td>${a.id}</td><td>${a.consultaId}</td><td>${a.animalNome ?? a.animalId}</td><td>${a.diagnostico ?? ''}</td><td>${a.observacoes ?? ''}</td><td>${a.orientacoes ?? ''}</td><td>${a.data ?? ''}</td>
+    <td><button class="btn-tab btn-excluir" onclick="excluirAtendimento(${a.id})">Excluir</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+async function excluirAtendimento(id) {
+  if (!confirm('Excluir este atendimento?')) return;
+  try { await del('/api/atendimentos/' + id); mostrarAlerta('Atendimento excluído.', 'sucesso'); carregarAtendimentos(); }
+  catch {}
+}
+document.getElementById('form-atendimento').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const form = ev.target;
+  const dados = formParaObjeto(form);
+  dados.consultaId = Number(dados.consultaId);
+  try {
+    await post('/api/atendimentos', dados);
+    mostrarAlerta('Atendimento criado com sucesso.', 'sucesso');
+    carregarAtendimentos();
+  } catch {}
+});
+
+// ---------- VACINAS ----------
+async function preencherSelectAnimalVacina() {
+  let animais = [];
+  try { animais = await get('/api/animais'); } catch { return; }
+  document.querySelector('#form-vacina select[name="animalId"]').innerHTML =
+    animais.map(a => `<option value="${a.id}">${a.nome} (#${a.id})</option>`).join('');
+}
+async function preencherSelectAtendimentoVacina() {
+  let atendimentos = [];
+  try { atendimentos = await get('/api/atendimentos'); } catch { return; }
+  const select = document.querySelector('#form-vacina select[name="atendimentoId"]');
+  select.innerHTML = '<option value="">-- nenhum --</option>' +
+    atendimentos.map(a => `<option value="${a.id}">#${a.id} - ${a.animalNome ?? a.animalId}</option>`).join('');
+}
+async function carregarVacinas() {
+  const div = document.getElementById('lista-vacinas');
+  div.innerHTML = 'Carregando...';
+  let vacinas;
+  try { vacinas = await get('/api/vacinas'); } catch { div.innerHTML = ''; return; }
+  if (!vacinas.length) { div.innerHTML = '<p class="vazio">Nenhuma vacina cadastrada.</p>'; return; }
+  div.innerHTML = `<table><thead><tr><th>ID</th><th>Nome</th><th>Data Aplicação</th><th>Lote</th><th>Animal</th><th>Atendimento</th><th></th></tr></thead>
+  <tbody>${vacinas.map(v => `<tr>
+    <td>${v.id}</td><td>${v.nome}</td><td>${v.dataAplicacao ?? ''}</td><td>${v.lote ?? ''}</td><td>${v.animalId}</td><td>${v.atendimentoId ?? ''}</td>
+    <td><button class="btn-tab btn-excluir" onclick="excluirVacina(${v.id})">Excluir</button></td>
+  </tr>`).join('')}</tbody></table>`;
+}
+async function excluirVacina(id) {
+  if (!confirm('Excluir esta vacina?')) return;
+  try { await del('/api/vacinas/' + id); mostrarAlerta('Vacina excluída.', 'sucesso'); carregarVacinas(); }
+  catch {}
+}
+document.getElementById('form-vacina').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const form = ev.target;
+  const dados = formParaObjeto(form);
+  dados.animalId = Number(dados.animalId);
+  dados.atendimentoId = dados.atendimentoId ? Number(dados.atendimentoId) : null;
+  try {
+    await post('/api/vacinas', dados);
+    mostrarAlerta('Vacina criada com sucesso.', 'sucesso');
+    carregarVacinas();
+  } catch {}
+});
+
+// ---------- HISTORICO ----------
+async function preencherSelectAnimalHistorico() {
+  let animais = [];
+  try { animais = await get('/api/animais'); } catch { return; }
+  document.querySelector('#form-historico select[name="animalId"]').innerHTML =
+    animais.map(a => `<option value="${a.id}">${a.nome} (#${a.id})</option>`).join('');
+}
+document.getElementById('form-historico').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const form = ev.target;
+  const animalId = form.elements['animalId'].value;
+  const div = document.getElementById('resultado-historico');
+  div.innerHTML = 'Carregando...';
+  let historico;
+  try { historico = await get('/api/animais/' + animalId + '/historico'); }
+  catch { div.innerHTML = ''; return; }
+  const atendimentosHtml = historico.atendimentos && historico.atendimentos.length
+    ? `<table><thead><tr><th>ID</th><th>Diagnóstico</th><th>Observações</th><th>Orientações</th><th>Data</th></tr></thead>
+       <tbody>${historico.atendimentos.map(a => `<tr><td>${a.id}</td><td>${a.diagnostico ?? ''}</td><td>${a.observacoes ?? ''}</td><td>${a.orientacoes ?? ''}</td><td>${a.data ?? ''}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="vazio">Nenhum atendimento.</p>';
+  const vacinasHtml = historico.vacinas && historico.vacinas.length
+    ? `<table><thead><tr><th>ID</th><th>Nome</th><th>Data Aplicação</th><th>Lote</th></tr></thead>
+       <tbody>${historico.vacinas.map(v => `<tr><td>${v.id}</td><td>${v.nome}</td><td>${v.dataAplicacao ?? ''}</td><td>${v.lote ?? ''}</td></tr>`).join('')}</tbody></table>`
+    : '<p class="vazio">Nenhuma vacina.</p>';
+  div.innerHTML = `
+    <p><strong>Animal:</strong> ${historico.animalNome ?? ''} (#${historico.animalId ?? ''}) &mdash; <strong>Tutor:</strong> ${historico.tutorNome ?? ''}</p>
+    <div class="historico-bloco"><h3>Atendimentos</h3>${atendimentosHtml}</div>
+    <div class="historico-bloco"><h3>Vacinas</h3>${vacinasHtml}</div>
+  `;
+});
+
+// ---------- INICIALIZAÇÃO ----------
+montarNav();
+carregarAba('tutores');
+</script>
+</body>
+</html>
